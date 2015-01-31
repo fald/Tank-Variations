@@ -40,7 +40,7 @@ pygame.display.set_caption(CAPTION)
 clock = pygame.time.Clock()
 
 defaultFont = pygame.font.SysFont("umeuigothic", 32, bold=True)
-tinyFont = pygame.font.SysFont("umeuigothic", 20)
+tinyFont = pygame.font.SysFont("umeuigothic", 18, bold=True)
 largeFont = pygame.font.SysFont("umeuigothic", 64)
 
 # Sprites...
@@ -121,8 +121,10 @@ def game_intro():
     #==========
     xSpacing    = int(RESOLUTION[0] / 7.0)
     yHeight     = int(RESOLUTION[1] * 3 / 4.0)
-    buttonW     = 100
-    buttonH     = 50
+##    buttonW     = 100
+##    buttonH     = 50
+    buttonW, buttonH = xSpacing, xSpacing / 2
+    radius      = 0.6
     # Close enough to centered.
 ##    pygame.draw.rect(gameDisplay, GREEN, (xSpacing, yHeight,
 ##                                          buttonW, buttonH))
@@ -131,16 +133,26 @@ def game_intro():
 ##    pygame.draw.rect(gameDisplay, RED, (xSpacing * 5, yHeight,
 ##                                          buttonW, buttonH))
 ##
-    AAfilledRoundedRect(gameDisplay,
-                        (xSpacing, yHeight, buttonW, buttonH),
-                        GREEN, 0.6)
-    AAfilledRoundedRect(gameDisplay,
-                        (xSpacing * 3, yHeight, buttonW, buttonH),
-                        YELLOW, 0.6)
-    AAfilledRoundedRect(gameDisplay,
-                        (xSpacing * 5, yHeight, buttonW, buttonH),
-                        RED, 0.6)
+##    AAfilledRoundedRect(gameDisplay,
+##                        (xSpacing, yHeight, buttonW, buttonH),
+##                        GREEN, 0.6)
+##    AAfilledRoundedRect(gameDisplay,
+##                        (xSpacing * 3, yHeight, buttonW, buttonH),
+##                        YELLOW, 0.6)
+##    AAfilledRoundedRect(gameDisplay,
+##                        (xSpacing * 5, yHeight, buttonW, buttonH),
+##                        RED, 0.6)
+    text_to_button(gameDisplay, GREEN, (xSpacing, yHeight),
+                   (buttonW, buttonH), radius,
+                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
+    text_to_button(gameDisplay, YELLOW, (xSpacing * 3, yHeight),
+                   (buttonW, buttonH), radius,
+                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
+    text_to_button(gameDisplay, RED, (xSpacing * 5, yHeight),
+                   (buttonW, buttonH), radius,
+                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
     
+
     pygame.display.update()
     while intro:
         for event in pygame.event.get():
@@ -200,6 +212,23 @@ def msg_to_screen(msg, font, color, location, antialias=True):
     gameDisplay.blit(text_surface, text_rect)
     
     return
+
+
+def text_to_button(surface, 
+                   but_color, but_location, but_size, radius,
+                   msg, txt_col=BLACK, txt_font=defaultFont, antialias=True):
+    textSurf = txt_font.render(msg, antialias, txt_col)
+    textRect = textSurf.get_rect()
+    textRect.center = (but_location[0] + but_size[0] / 2,
+                       but_location[1] + but_size[1] / 2)
+    AAfilledRoundedRect(surface,
+                        (but_location[0], but_location[1],
+                         but_size[0], but_size[1]),
+                        but_color, radius)    
+
+    
+    surface.blit(textSurf, textRect)
+
 
 
 #----------------------------
