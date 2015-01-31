@@ -10,13 +10,18 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (200, 20, 20)
 RED2 = (200, 50, 50)
+L_RED = (255, 0, 0)
 GREEN = (20, 200, 20)
+L_GREEN = (0, 255, 0)
 BLUE = (20, 20, 200)
 YELLOW = (240, 240, 50)
+L_YELLOW = (255, 255, 155)
 
 RESOLUTION = (800, 600)
 CAPTION = "Fuck you, I'm a TANK!"
 FPS = 10
+# Just for the intro screen
+intro_FPS = 5
 
 BLOCK_SIZE = 50
 
@@ -118,6 +123,7 @@ def game_intro():
 
     #==========
     # Buttons!
+    # Hoo boy that is some ugly code.
     #==========
     xSpacing    = int(RESOLUTION[0] / 7.0)
     yHeight     = int(RESOLUTION[1] * 3 / 4.0)
@@ -142,19 +148,63 @@ def game_intro():
 ##    AAfilledRoundedRect(gameDisplay,
 ##                        (xSpacing * 5, yHeight, buttonW, buttonH),
 ##                        RED, 0.6)
-    text_to_button(gameDisplay, GREEN, (xSpacing, yHeight),
+    play_button_alt = text_to_button(gameDisplay, L_GREEN, (xSpacing, yHeight),
                    (buttonW, buttonH), radius,
                    "PLAY", txt_col=BLACK, txt_font=tinyFont)
-    text_to_button(gameDisplay, YELLOW, (xSpacing * 3, yHeight),
+    cont_button_alt = text_to_button(gameDisplay, L_YELLOW, (xSpacing * 3, yHeight),
                    (buttonW, buttonH), radius,
                    "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
-    text_to_button(gameDisplay, RED, (xSpacing * 5, yHeight),
+    quit_button_alt = text_to_button(gameDisplay, L_RED, (xSpacing * 5, yHeight),
                    (buttonW, buttonH), radius,
                    "QUIT", txt_col=BLACK, txt_font=tinyFont)
-    
+    play_button = text_to_button(gameDisplay, GREEN, (xSpacing, yHeight),
+                   (buttonW, buttonH), radius,
+                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
+    cont_button = text_to_button(gameDisplay, YELLOW, (xSpacing * 3, yHeight),
+                   (buttonW, buttonH), radius,
+                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
+    quit_button = text_to_button(gameDisplay, RED, (xSpacing * 5, yHeight),
+                   (buttonW, buttonH), radius,
+                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
 
-    pygame.display.update()
+
+
+    buttons = ((play_button, play_button_alt),
+               (cont_button, cont_button_alt),
+               (quit_button, quit_button_alt))
+
+    # pygame.display.update()
     while intro:
+        # For button presses and light ups
+        # plz make button object in next iteration
+        curs_pos = pygame.mouse.get_pos()
+
+        if play_button.collidepoint(curs_pos):
+            text_to_button(gameDisplay, L_GREEN, (xSpacing, yHeight),
+                   (buttonW, buttonH), radius,
+                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
+        else:
+                play_button = text_to_button(gameDisplay, GREEN, (xSpacing, yHeight),
+                   (buttonW, buttonH), radius,
+                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
+        if cont_button.collidepoint(curs_pos):
+            text_to_button(gameDisplay, L_YELLOW, (xSpacing * 3, yHeight),
+                   (buttonW, buttonH), radius,
+                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
+        else:
+                cont_button = text_to_button(gameDisplay, YELLOW, (xSpacing * 3, yHeight),
+                   (buttonW, buttonH), radius,
+                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
+        if quit_button.collidepoint(curs_pos):
+            text_to_button(gameDisplay, L_RED, (xSpacing * 5, yHeight),
+                   (buttonW, buttonH), radius,
+                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
+        else:
+                quit_button = text_to_button(gameDisplay, RED, (xSpacing * 5, yHeight),
+                   (buttonW, buttonH), radius,
+                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
+        
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.display.quit()
@@ -167,8 +217,8 @@ def game_intro():
                     intro = False
                     return
 
-
-        clock.tick(FPS)
+        pygame.display.update()
+        clock.tick(intro_FPS)
 
 
 def pause():
@@ -221,13 +271,15 @@ def text_to_button(surface,
     textRect = textSurf.get_rect()
     textRect.center = (but_location[0] + but_size[0] / 2,
                        but_location[1] + but_size[1] / 2)
-    AAfilledRoundedRect(surface,
+    button = AAfilledRoundedRect(surface,
                         (but_location[0], but_location[1],
                          but_size[0], but_size[1]),
                         but_color, radius)    
 
     
     surface.blit(textSurf, textRect)
+    
+    return button
 
 
 
