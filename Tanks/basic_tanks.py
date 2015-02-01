@@ -109,6 +109,7 @@ def AAfilledRoundedRect(surface,rect,color,radius=0.4):
 def game_intro():
     intro = True
     gameDisplay.fill(BG_COLOR)
+    timer = 0
     msg_to_screen("TAAAAAAAANKS?!",
                   largeFont, GREEN,
                   (RESOLUTION[0] / 2,
@@ -133,10 +134,16 @@ def game_intro():
     while intro:
         # For button presses and light ups
         # plz make button object in next iteration
-
-        button("PLAY", xSpacing, yHeight, buttonW, buttonH, L_GREEN, GREEN, action=play)
-        button("CONTROLS", xSpacing*3, yHeight, buttonW, buttonH, L_YELLOW, YELLOW, action=controls)
-        button("QUIT", xSpacing*5, yHeight, buttonW, buttonH, L_RED, RED, action=quit_game)
+        # Also: Ugly way of dealing with button press overlap.
+        if timer < 150:
+            button("PLAY", xSpacing, yHeight, buttonW, buttonH, L_GREEN, GREEN)
+            button("CONTROLS", xSpacing*3, yHeight, buttonW, buttonH, L_YELLOW, YELLOW)
+            button("QUIT", xSpacing*5, yHeight, buttonW, buttonH, L_RED, RED)
+        else:
+            button("PLAY", xSpacing, yHeight, buttonW, buttonH, L_GREEN, GREEN, action=play)
+            button("CONTROLS", xSpacing*3, yHeight, buttonW, buttonH, L_YELLOW, YELLOW,
+                   action=controls)
+            button("QUIT", xSpacing*5, yHeight, buttonW, buttonH, L_RED, RED, action=quit_game)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -148,10 +155,13 @@ def game_intro():
                     sys.exit(0)
                 else:
                     # intro = False
-                    return
+                    # return
+                    pass
 
         pygame.display.update()
         clock.tick(FPS)
+        if timer < 150:
+            timer = min(150, timer + clock.get_time())
 
 
 def pause():
@@ -178,7 +188,7 @@ def pause():
                 elif event.key == pygame.K_p:
                     paused = False
                     return
-        clock.tick(FPS)    
+        clock.tick(FPS)
 
 
 def play():
@@ -186,7 +196,68 @@ def play():
 
 
 def controls():
-    pass
+    controls = True
+    gameDisplay.fill(BG_COLOR)
+    msg_to_screen("CONTROL SCREEN",
+                  largeFont, GREEN,
+                  (RESOLUTION[0] / 2,
+                   RESOLUTION[1] / 2 - largeFont.get_linesize()))
+    msg_to_screen("Fire: SPACEBAR",
+                  defaultFont, BLACK,
+                  (RESOLUTION[0] / 2,
+                   RESOLUTION[1] / 2 + defaultFont.get_linesize()))
+    msg_to_screen("Turret: UP/DOWN ARROWS",
+                  defaultFont, BLACK,
+                  (RESOLUTION[0] / 2,
+                   RESOLUTION[1] / 2 + 2 * defaultFont.get_linesize()))
+    msg_to_screen("Move: LEFT/RIGHT ARROWS",
+                  defaultFont, BLACK,
+                  (RESOLUTION[0] / 2,
+                   RESOLUTION[1] / 2 + 3 * defaultFont.get_linesize()))
+
+    pygame.display.update()
+
+    # Just to keep it the same size as the main window buttons.
+    xSpacing    = int(RESOLUTION[0] / 7.0)
+    yHeight     = int(RESOLUTION[1] * 3 / 4.0)
+    buttonW, buttonH = xSpacing, xSpacing / 2
+    x_pos    = int((RESOLUTION[0] / 2.0) - (buttonW / 2.0))
+    # x_pos = xSpacing
+    radius      = 0.6
+    cur_height = RESOLUTION[1]
+
+    # OK so - get_pressed returns if its down or not.
+    # This means that for a split second if the mouse is over a button on
+    # the same position ("CONTROLS" in game intro), it'll get caught in
+    # a horrific loop.
+    # This is not ideal.
+    # As a temporary fix in this iteration, I'll just try to have it swipe in from
+    # below to make it look like I intended it that way.
+    # Could just add a timer. Could have just added a fucking timer.
+    while controls:
+        if cur_height != yHeight:
+            gameDisplay.fill(BG_COLOR, (x_pos, cur_height + 10, buttonW, buttonH))
+            cur_height = max(yHeight, cur_height - 10)
+            button("RETURN", x_pos, cur_height, buttonW, buttonH, L_YELLOW, YELLOW,
+                   action=None)
+        else:
+            button("RETURN", x_pos, cur_height, buttonW, buttonH, L_YELLOW, YELLOW,
+                   action=game_intro)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                sys.exit(0)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.display.quit()
+                    sys.exit(0)
+                else:
+                    # intro = False
+                    # return
+                    pass
+
+        pygame.display.update()
+        clock.tick(FPS)
 
 
 def quit_game():
