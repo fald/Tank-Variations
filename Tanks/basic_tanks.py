@@ -8,6 +8,7 @@ from pygame.locals import *
 # ---------------------
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GRAY = (200, 200, 200)
 RED = (175, 20, 20)
 RED2 = (200, 50, 50)
 L_RED = (255, 0, 0)
@@ -17,11 +18,11 @@ BLUE = (20, 20, 200)
 YELLOW = (175, 175, 50)
 L_YELLOW = (255, 255, 0)
 
+BG_COLOR = GRAY
+
 RESOLUTION = (800, 600)
 CAPTION = "Fuck you, I'm a TANK!"
 FPS = 10
-# Just for the intro screen
-intro_FPS = 5
 
 BLOCK_SIZE = 50
 
@@ -107,7 +108,7 @@ def AAfilledRoundedRect(surface,rect,color,radius=0.4):
 
 def game_intro():
     intro = True
-    gameDisplay.fill(WHITE)
+    gameDisplay.fill(BG_COLOR)
     msg_to_screen("TAAAAAAAANKS?!",
                   largeFont, GREEN,
                   (RESOLUTION[0] / 2,
@@ -123,90 +124,19 @@ def game_intro():
 
     #==========
     # Buttons!
-    # Hoo boy that is some ugly code.
     #==========
     xSpacing    = int(RESOLUTION[0] / 7.0)
     yHeight     = int(RESOLUTION[1] * 3 / 4.0)
-##    buttonW     = 100
-##    buttonH     = 50
     buttonW, buttonH = xSpacing, xSpacing / 2
     radius      = 0.6
-    # Close enough to centered.
-##    pygame.draw.rect(gameDisplay, GREEN, (xSpacing, yHeight,
-##                                          buttonW, buttonH))
-##    pygame.draw.rect(gameDisplay, YELLOW, (xSpacing * 3, yHeight,
-##                                          buttonW, buttonH))
-##    pygame.draw.rect(gameDisplay, RED, (xSpacing * 5, yHeight,
-##                                          buttonW, buttonH))
-##
-##    AAfilledRoundedRect(gameDisplay,
-##                        (xSpacing, yHeight, buttonW, buttonH),
-##                        GREEN, 0.6)
-##    AAfilledRoundedRect(gameDisplay,
-##                        (xSpacing * 3, yHeight, buttonW, buttonH),
-##                        YELLOW, 0.6)
-##    AAfilledRoundedRect(gameDisplay,
-##                        (xSpacing * 5, yHeight, buttonW, buttonH),
-##                        RED, 0.6)
-##    play_button_alt = text_to_button(gameDisplay, L_GREEN, (xSpacing, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
-##    cont_button_alt = text_to_button(gameDisplay, L_YELLOW, (xSpacing * 3, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
-##    quit_button_alt = text_to_button(gameDisplay, L_RED, (xSpacing * 5, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
-##    play_button = text_to_button(gameDisplay, GREEN, (xSpacing, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
-##    cont_button = text_to_button(gameDisplay, YELLOW, (xSpacing * 3, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
-##    quit_button = text_to_button(gameDisplay, RED, (xSpacing * 5, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
-##
-##
-##
-##    buttons = ((play_button, play_button_alt),
-##               (cont_button, cont_button_alt),
-##               (quit_button, quit_button_alt))
 
-    # pygame.display.update()
     while intro:
         # For button presses and light ups
         # plz make button object in next iteration
-##        curs_pos = pygame.mouse.get_pos()
-##
-##        if play_button.collidepoint(curs_pos):
-##            text_to_button(gameDisplay, L_GREEN, (xSpacing, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
-##        else:
-##                play_button = text_to_button(gameDisplay, GREEN, (xSpacing, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "PLAY", txt_col=BLACK, txt_font=tinyFont)
-##        if cont_button.collidepoint(curs_pos):
-##            text_to_button(gameDisplay, L_YELLOW, (xSpacing * 3, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
-##        else:
-##                cont_button = text_to_button(gameDisplay, YELLOW, (xSpacing * 3, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "CONTROLS", txt_col=BLACK, txt_font=tinyFont)
-##        if quit_button.collidepoint(curs_pos):
-##            text_to_button(gameDisplay, L_RED, (xSpacing * 5, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
-##        else:
-##                quit_button = text_to_button(gameDisplay, RED, (xSpacing * 5, yHeight),
-##                   (buttonW, buttonH), radius,
-##                   "QUIT", txt_col=BLACK, txt_font=tinyFont)
 
-        button("PLAY", xSpacing, yHeight, buttonW, buttonH, L_GREEN, GREEN)
-        button("CONTROLS", xSpacing*3, yHeight, buttonW, buttonH, L_YELLOW, YELLOW)
-        button("QUIT", xSpacing*5, yHeight, buttonW, buttonH, L_RED, RED)
+        button("PLAY", xSpacing, yHeight, buttonW, buttonH, L_GREEN, GREEN, action=play)
+        button("CONTROLS", xSpacing*3, yHeight, buttonW, buttonH, L_YELLOW, YELLOW, action=controls)
+        button("QUIT", xSpacing*5, yHeight, buttonW, buttonH, L_RED, RED, action=quit_game)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -217,11 +147,11 @@ def game_intro():
                     pygame.display.quit()
                     sys.exit(0)
                 else:
-                    intro = False
+                    # intro = False
                     return
 
         pygame.display.update()
-        clock.tick(intro_FPS)
+        clock.tick(FPS)
 
 
 def pause():
@@ -249,6 +179,19 @@ def pause():
                     paused = False
                     return
         clock.tick(FPS)    
+
+
+def play():
+    pass
+
+
+def controls():
+    pass
+
+
+def quit_game():
+    pygame.display.quit()
+    sys.exit()
 
 
 def draw_score():
@@ -285,14 +228,21 @@ def text_to_button(surface,
     return button
 
 
-def button(txt, x_pos, y_pos, wid, hei, active_color, inactive_color,
+def button(txt, x_pos, y_pos, wid, hei,
+           active_color, inactive_color, action=None,
            radius=0.6, surface=gameDisplay, txt_col=BLACK,
            txt_font=tinyFont, antialias=True):
     cur = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
     buttonRect = Rect(x_pos, y_pos, wid, hei)
     if buttonRect.collidepoint(cur):
         text_to_button(surface, active_color, (x_pos, y_pos), (wid, hei), radius,
                        txt, txt_font=txt_font)
+        if click[0] == 1:
+            try:
+                action()
+            except TypeError:
+                pass
     else:
         text_to_button(surface, inactive_color, (x_pos, y_pos), (wid, hei), radius,
                        txt, txt_font=txt_font)
@@ -360,7 +310,7 @@ def main_loop():
                     pass
 
 
-        gameDisplay.fill(WHITE)
+        gameDisplay.fill(BG_COLOR)
 
         pygame.display.update()
         clock.tick(FPS)
