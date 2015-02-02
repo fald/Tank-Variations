@@ -22,7 +22,9 @@ BG_COLOR = GRAY
 
 RESOLUTION = (800, 600)
 CAPTION = "Fuck you, I'm a TANK!"
-FPS = 10
+FPS = 15
+
+TANK_DIM = (80, 60)
 
 BLOCK_SIZE = 50
 
@@ -33,6 +35,12 @@ BLOCK_SIZE = 50
 # OTHER GLOBALS
 #-----------------------
 SCORE = 0
+player = {'x':RESOLUTION[0] * 0.1,
+          'y':RESOLUTION[1] * 0.7,
+          # Angle is in radians and assuming facing right as 0 or 2pi
+          'angle':2 * math.pi,
+          'color':GREEN}
+          
 #-----------------------
 
 
@@ -198,7 +206,7 @@ def play():
 def controls():
     controls = True
     gameDisplay.fill(BG_COLOR)
-    msg_to_screen("CONTROL SCREEN",
+    msg_to_screen("CONTROLS",
                   largeFont, GREEN,
                   (RESOLUTION[0] / 2,
                    RESOLUTION[1] / 2 - largeFont.get_linesize()))
@@ -214,6 +222,10 @@ def controls():
                   defaultFont, BLACK,
                   (RESOLUTION[0] / 2,
                    RESOLUTION[1] / 2 + 3 * defaultFont.get_linesize()))
+    msg_to_screen("Pause: P",
+                  defaultFont, BLACK,
+                  (RESOLUTION[0] / 2,
+                   RESOLUTION[1] / 2 + 4 * defaultFont.get_linesize()))
 
     pygame.display.update()
 
@@ -279,6 +291,37 @@ def msg_to_screen(msg, font, color, location, antialias=True):
     gameDisplay.blit(text_surface, text_rect)
     
     return
+
+
+def draw_tank(display, tank,
+              tankW=TANK_DIM[0], tankH=TANK_DIM[1], tread_radius=0.8):
+    # pos is the circles center
+    turret_center = (int(tank['x'] + tankW / 2.0),
+                     int(tank['y'] + tankH / 3.0))
+    turret_radius = int(tankH / 3.0)
+    turret = pygame.draw.circle(display, tank['color'], turret_center, turret_radius)
+
+    gun_length  = turret_radius * 2
+    gun_start   = (turret_center[0], int(turret_center[1] - turret_radius * 0.3))
+    gun_end     = [gun_start[0] + int(math.cos(tank['angle']) * gun_length),
+                   gun_start[1] + int(math.sin(tank['angle']) * gun_length)]
+    gun_thick   = int(turret_radius * 0.15)
+    gun = pygame.draw.line(display, tank['color'], gun_start, gun_end, gun_thick)
+
+    # Tread is the outer tread - in black to look like tires.
+    tread_x, tread_y = tank['x'], int(tank['y'] + tankH / 3.0)
+    # Tread 2 is the inner treads - nothing fancy, just so the outer
+    # ones kinda look like tires.
+    tread2_x, tread2_y = tread_x + int(tankW / 10), tread_y + int(tankW / 10)
+    
+    tread_w, tread_h = tankW, int(tankH * 2 / 3.0)
+    tread2_w, tread2_h = tread_w - int(tankW / 5), tread_h - int(tankW / 5)
+
+    outerTread = AAfilledRoundedRect(display, (tread_x, tread_y, tread_w, tread_h),
+                                     BLACK, tread_radius)
+    innerTread = AAfilledRoundedRect(display, (tread2_x, tread2_y, tread2_w, tread2_h),
+                                     tank['color'], tread_radius)
+    
 
 
 def text_to_button(surface, 
