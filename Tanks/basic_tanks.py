@@ -30,15 +30,16 @@ BLOCK_SIZE = 50
 
 #-----------------------
 
-
 #-----------------------
 # OTHER GLOBALS
 #-----------------------
 SCORE = 0
-player = {'x':RESOLUTION[0] * 0.1,
-          'y':RESOLUTION[1] * 0.7,
+player = {'x':RESOLUTION[0] * 0,
+          'y':RESOLUTION[1] * 0.2,
+          'move':0,
+          'turn':0,
           # Angle is in radians and assuming facing right as 0 or 2pi
-          'angle':2 * math.pi,
+          'angle':2 * math.pi - math.pi * .25,
           'color':GREEN}
           
 #-----------------------
@@ -140,6 +141,11 @@ def game_intro():
     radius      = 0.6
 
     while intro:
+        gameDisplay.fill(BG_COLOR)
+        player['x'] += player['move']
+        # Range: 3-6.4
+        player['angle'] = max(min(6.4, player['angle'] + player['turn']), 3)
+        draw_tank(gameDisplay, player)
         # For button presses and light ups
         # plz make button object in next iteration
         # Also: Ugly way of dealing with button press overlap.
@@ -164,7 +170,24 @@ def game_intro():
                 else:
                     # intro = False
                     # return
+                    if event.key == pygame.K_RIGHT:
+                        player['move'] = 0
+                    if event.key == pygame.K_LEFT:
+                        player['move'] = 0
+                    if event.key in (pygame.K_UP, pygame.K_DOWN):
+                        player['turn'] = 0
+                        
                     pass
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    player['move'] = 5
+                if event.key == pygame.K_LEFT:
+                    player['move'] -= 5
+                if event.key == pygame.K_UP:
+                    player['turn'] = -math.pi / 90
+                if event.key == pygame.K_DOWN:
+                    player['turn'] = math.pi / 90
 
         pygame.display.update()
         clock.tick(FPS)
@@ -305,7 +328,7 @@ def draw_tank(display, tank,
     gun_start   = (turret_center[0], int(turret_center[1] - turret_radius * 0.3))
     gun_end     = [gun_start[0] + int(math.cos(tank['angle']) * gun_length),
                    gun_start[1] + int(math.sin(tank['angle']) * gun_length)]
-    gun_thick   = int(turret_radius * 0.15)
+    gun_thick   = int(turret_radius * 0.3)
     gun = pygame.draw.line(display, tank['color'], gun_start, gun_end, gun_thick)
 
     # Tread is the outer tread - in black to look like tires.
@@ -321,6 +344,21 @@ def draw_tank(display, tank,
                                      BLACK, tread_radius)
     innerTread = AAfilledRoundedRect(display, (tread2_x, tread2_y, tread2_w, tread2_h),
                                      tank['color'], tread_radius)
+
+    wheel_radius = int(tread2_h / 4)
+    top_wheels = int(float(tread2_w) / (2 * wheel_radius))
+    bot_wheels = top_wheels - 1
+    top_spacing = (tread2_w - top_wheels * 2 * wheel_radius) / (top_wheels - 1)
+    bot_spacing = (tread2_w - wheel_radius - bot_wheels * 2 * wheel_radius) / (bot_wheels - 1)
+    cur_position = [tread2_x + wheel_radius, tread2_y + wheel_radius]
+    for i in range(top_wheels):
+        pygame.draw.circle(gameDisplay, BLACK, cur_position, wheel_radius)
+        cur_position = [cur_position[0] + 2 * wheel_radius + top_spacing, cur_position[1]]
+    cur_position = [tread2_x + int((3 / 2.0) * wheel_radius), tread2_y + 3 * wheel_radius]
+    for i in range(bot_wheels):
+        pygame.draw.circle(gameDisplay, BLACK, cur_position, wheel_radius)
+        cur_position = [cur_position[0] + 2 * wheel_radius + bot_spacing, cur_position[1]]
+    
     
 
 
