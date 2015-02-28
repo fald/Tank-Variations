@@ -24,7 +24,7 @@ RESOLUTION = (800, 600)
 CAPTION = "Fuck you, I'm a TANK!"
 FPS = 15
 
-TANK_DIM = (80, 60)
+TANK_DIM = (60, 45)
 
 BLOCK_SIZE = 50
 
@@ -35,13 +35,27 @@ BLOCK_SIZE = 50
 #-----------------------
 SCORE = 0
 player = {'x':RESOLUTION[0] * 0,
-          'y':RESOLUTION[1] * 0.2,
+          'y':RESOLUTION[1] * 0.9 - TANK_DIM[1],
           'move':0,
           'turn':0,
           # Angle is in radians and assuming facing right as 0 or 2pi
-          'angle':2 * math.pi - math.pi * .25,
+          'angle':0, #2 * math.pi - math.pi * .25,
+          'max':0.07,
+          'min':-0.77,
           'color':GREEN}
-          
+enemy = {'x':RESOLUTION[0] * 1 - TANK_DIM[0],
+         'y':RESOLUTION[1] * 0.9 - TANK_DIM[1],
+         'move':0,
+         'turn':0,
+         'angle':math.pi,
+         'max':math.pi + 0.77,
+         'min':math.pi - 0.07,
+         'color':BLUE}
+barrier = {'height':RESOLUTION[1] - player['y'] + TANK_DIM[1] + random.randint(0, TANK_DIM[1] * 2),
+           'width':random.randint(10, TANK_DIM[0] / 2),
+           'x':RESOLUTION[0] / 2 + random.randint(-0.2*RESOLUTION[0],
+                                                  0.2*RESOLUTION[0])}
+
 #-----------------------
 
 
@@ -141,11 +155,10 @@ def game_intro():
     radius      = 0.6
 
     while intro:
-        gameDisplay.fill(BG_COLOR)
-        player['x'] += player['move']
-        # Range: 3-6.4
-        player['angle'] = max(min(6.4, player['angle'] + player['turn']), 3)
-        draw_tank(gameDisplay, player)
+        # gameDisplay.fill(BG_COLOR)
+        # player['x'] += player['move']
+        # player['angle'] = min(max(player['min'], player['angle'] + player['turn']), player['max'])
+        # draw_tank(gameDisplay, player)
         # For button presses and light ups
         # plz make button object in next iteration
         # Also: Ugly way of dealing with button press overlap.
@@ -170,24 +183,25 @@ def game_intro():
                 else:
                     # intro = False
                     # return
-                    if event.key == pygame.K_RIGHT:
-                        player['move'] = 0
-                    if event.key == pygame.K_LEFT:
-                        player['move'] = 0
-                    if event.key in (pygame.K_UP, pygame.K_DOWN):
-                        player['turn'] = 0
+##                    if event.key == pygame.K_RIGHT:
+##                        player['move'] = 0
+##                    if event.key == pygame.K_LEFT:
+##                        player['move'] = 0
+##                    if event.key in (pygame.K_UP, pygame.K_DOWN):
+##                        player['turn'] = 0
                         
                     pass
 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    player['move'] = 5
-                if event.key == pygame.K_LEFT:
-                    player['move'] -= 5
-                if event.key == pygame.K_UP:
-                    player['turn'] = -math.pi / 90
-                if event.key == pygame.K_DOWN:
-                    player['turn'] = math.pi / 90
+##                if event.key == pygame.K_RIGHT:
+##                    player['move'] = 5
+##                if event.key == pygame.K_LEFT:
+##                    player['move'] -= 5
+##                if event.key == pygame.K_UP:
+##                    player['turn'] = -math.pi / 90
+##                if event.key == pygame.K_DOWN:
+##                    player['turn'] = math.pi / 90
+                pass
 
         pygame.display.update()
         clock.tick(FPS)
@@ -223,7 +237,87 @@ def pause():
 
 
 def play():
-    pass
+    play = True
+    stall = False
+
+    while play:
+        gameDisplay.fill(BG_COLOR)
+
+        player['x'] += player['move']
+        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
+                              player['x']), 0)
+        player['angle'] = min(max(player['min'],
+                                  player['angle'] + player['turn']),
+                              player['max'])
+        draw_tank(gameDisplay, player)
+
+        enemy['x'] += enemy['move']
+        enemy['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
+                              enemy['x']), 0)
+        enemy['angle'] = min(max(enemy['min'],
+                                 enemy['angle'] - player['turn']),
+                             enemy['max'])
+        draw_tank(gameDisplay, enemy)
+
+        # Trivial collision, it'll do for V0.01, but its a bit shit.
+        if (player['x'] + TANK_DIM[0]) > (enemy['x']):
+            player['x'] -=  max(abs(enemy['move']), abs(player['move']))
+            enemy['x'] +=  max(abs(enemy['move']), abs(player['move']))
+            enemy['move'] = 0
+            player['move'] = 0
+            stall = True
+        if (player['x'] + TANK_DIM[0]) >= \
+           (barrier['x'] - 0.5 * barrier['width']):
+            player['x'] -= player['move']
+            player['move'] = 0
+            stall = True
+        if enemy['x'] <= (barrier['x'] + 0.5 * barrier['width']):
+            enemy['x'] -=  enemy['move']
+            enemy['move'] = 0
+            stall = True
+
+        draw_barrier(gameDisplay)
+            
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                sys.exit(0)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.display.quit()
+                    sys.exit(0)
+                else:
+                    if event.key == pygame.K_p:
+                        pause()
+                    if event.key == pygame.K_RIGHT:
+                        player['move'] = 0
+                        enemy['move'] = 0
+                        stall = False
+                    if event.key == pygame.K_LEFT:
+                        player['move'] = 0
+                        enemy['move'] = 0
+                        stall = False
+                    if event.key in (pygame.K_UP, pygame.K_DOWN):
+                        player['turn'] = 0
+                        
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    if not stall:
+                        player['move'] = 5
+                        enemy['move'] = 5
+                if event.key == pygame.K_LEFT:
+                    if not stall:
+                        player['move'] = -5
+                        enemy['move'] = -5
+                if event.key == pygame.K_UP:
+                    player['turn'] = -math.pi / 90
+                if event.key == pygame.K_DOWN:
+                    player['turn'] = math.pi / 90
+
+
+        pygame.display.update()
+        clock.tick(FPS)
 
 
 def controls():
@@ -316,6 +410,31 @@ def msg_to_screen(msg, font, color, location, antialias=True):
     return
 
 
+def new_enemy():
+    pass
+
+
+def new_barrier():
+    global barrier
+    barrier = {'height': player['y'] + random.randint(0, TANK_DIM[1] * 2),
+               'width':random.randint(10, TANK_DIM[0] / 2),
+               'x':RESOLUTION[0] / 2 + random.randint(0.2*RESOLUTION[0], -0.2*RESOLUTION[0])}
+               
+    return
+
+
+def draw_barrier(display):
+    # Lines drawn centered on the start pos, unlike rects
+    #pygame.draw.line(display, BLACK, (0,0), (0, RESOLUTION[1]), RESOLUTION[0])
+    #pygame.draw.line(display, BLACK, (0,0), (0, RESOLUTION[1]), 2)
+    pygame.draw.line(display, BLACK,
+                     (barrier['x'], RESOLUTION[1]),
+                     (barrier['x'], RESOLUTION[1] - barrier['height']),
+                      barrier['width'])
+    return
+    
+
+    
 def draw_tank(display, tank,
               tankW=TANK_DIM[0], tankH=TANK_DIM[1], tread_radius=0.8):
     # pos is the circles center
