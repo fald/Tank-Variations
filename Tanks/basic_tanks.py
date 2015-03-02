@@ -47,11 +47,12 @@ player = {'x':RESOLUTION[0] * 0,
           'color':GREEN,
           'turret':(60, 505), # cache the end of the turret - don't want to recalc so much
           'name':'player',
-          'power':0,
+          'power':10,
           'power_incr':5,
           'increase':False,
           'power_max':255,
           'facing':1,
+          'rect':None,
           # Include an increase/decrease so holding afer
           # apex weakens shot?
           } 
@@ -65,17 +66,20 @@ enemy = {'x':RESOLUTION[0] * 1 - TANK_DIM[0],
          'color':BLUE,
          'turret':(740, 505),
          'name':'enemy',
-         'power':0,
+         'power':10,
          'power_incr':5,
          'increase':False,
          'power_max':255,
          'facing':-1,
+         'rect':None,
          }
 tanks = (player, enemy)
 barrier = {'height':RESOLUTION[1] - player['y'] + TANK_DIM[1] + random.randint(0, TANK_DIM[1] * 2),
            'width':random.randint(10, TANK_DIM[0] / 2),
            'x':RESOLUTION[0] / 2 + random.randint(-0.2*RESOLUTION[0],
-                                                  0.2*RESOLUTION[0])}
+                                                  0.2*RESOLUTION[0]),
+           'rect':None,
+           }
 
 #-----------------------
 
@@ -264,23 +268,38 @@ def play():
     while play:
         gameDisplay.fill(BG_COLOR)
 
-        player['x'] += player['move']
-        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
-                              player['x']), 0)
-        player['angle'] = min(max(player['min'],
-                                  player['angle'] + player['turn']),
-                              player['max'])
-        player['power'] += player['power_incr'] * player['increase']
-        draw_tank(gameDisplay, player)
+        tanks[TURN]['x'] += tanks[TURN]['move']
+        tanks[TURN]['x'] =  max(min(RESOLUTION[0] - TANK_DIM[0],
+                              tanks[TURN]['x']), 0)
+        tanks[TURN]['angle'] += tanks[TURN]['turn']
+        tanks[TURN]['angle'] = min(max(tanks[TURN]['min'],
+                                       tanks[TURN]['angle']),
+                                   tanks[TURN]['max'])
+        tanks[TURN]['power'] += tanks[TURN]['power_incr'] * tanks[TURN]['increase']
 
-        enemy['x'] += enemy['move']
-        enemy['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
-                              enemy['x']), 0)
-        enemy['angle'] = min(max(enemy['min'],
-                                 enemy['angle'] - enemy['turn']),
-                             enemy['max'])
-        enemy['power'] += enemy['power_incr'] * enemy['increase']
-        draw_tank(gameDisplay, enemy)
+        tanks[(TURN + 1) % 2]['move'] = 0
+        tanks[(TURN + 1) % 2]['turn'] = 0
+
+        for tank in tanks:
+            draw_tank(gameDisplay, tank)
+
+##        player['x'] += player['move']
+##        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
+##                              player['x']), 0)
+##        player['angle'] = min(max(player['min'],
+##                                  player['angle'] + player['turn']),
+##                              player['max'])
+##        player['power'] += player['power_incr'] * player['increase']
+##        draw_tank(gameDisplay, player)
+##
+##        enemy['x'] += enemy['move']
+##        enemy['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
+##                              enemy['x']), 0)
+##        enemy['angle'] = min(max(enemy['min'],
+##                                 enemy['angle'] - enemy['turn']),
+##                             enemy['max'])
+##        enemy['power'] += enemy['power_incr'] * enemy['increase']
+##        draw_tank(gameDisplay, enemy)
 
         # Trivial collision, it'll do for V0.01, but its a bit shit.
         if (player['x'] + TANK_DIM[0]) > (enemy['x']):
@@ -299,7 +318,7 @@ def play():
             enemy['move'] = 0
             stall = True
 
-        draw_barrier(gameDisplay)
+        barrier['rect'] = draw_barrier(gameDisplay)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -312,19 +331,19 @@ def play():
                 else:
                     if event.key == pygame.K_p:
                         pause()
-                    if event.key == pygame.K_RIGHT:
-                        player['move'] = 0
-                        enemy['move'] = 0
+                    if event.key in (pygame.K_RIGHT, pygame.K_LEFT):
+                        tanks[TURN]['move'] = 0
                         stall = False
-                    if event.key == pygame.K_LEFT:
-                        player['move'] = 0
-                        enemy['move'] = 0
-                        stall = False
+                        tanks[TURN]['rect'] = pygame.Rect(tanks[TURN]['x'],
+                                                          tanks[TURN]['y'],
+                                                          TANK_DIM[0],
+                                                          TANK_DIM[1])
                     if event.key in (pygame.K_UP, pygame.K_DOWN):
-                        player['turn'] = 0
+                        tanks[TURN]['turn'] = 0
 
                     if event.key == pygame.K_SPACE:
-                        tank_fire(gameDisplay, tanks[TURN])
+                        if tanks[TURN]['increase']:
+                            tank_fire(gameDisplay, tanks[TURN])
 ##                        tank_fire(gameDisplay, player)
 ##                        tank_fire(gameDisplay, enemy)
                         
@@ -340,12 +359,13 @@ def play():
 ##                        enemy['move'] = -5
                         tanks[TURN]['move'] = -5
                 if event.key == pygame.K_UP:
-                    tanks[TURN]['turn'] = -math.pi / 90
+                    tanks[TURN]['turn'] = -math.pi / 90 * tanks[TURN]['facing']
                 if event.key == pygame.K_DOWN:
-                    tanks[TURN]['turn'] = math.pi / 90
+                    tanks[TURN]['turn'] = math.pi / 90 * tanks[TURN]['facing']
 
                 if event.key == pygame.K_SPACE:
-                    tanks[TURN]['increase'] = True
+                    if tanks[TURN]['move'] == 0:
+                        tanks[TURN]['increase'] = True
     
 
         pygame.display.update()
@@ -459,11 +479,11 @@ def draw_barrier(display):
     # Lines drawn centered on the start pos, unlike rects
     #pygame.draw.line(display, BLACK, (0,0), (0, RESOLUTION[1]), RESOLUTION[0])
     #pygame.draw.line(display, BLACK, (0,0), (0, RESOLUTION[1]), 2)
-    pygame.draw.line(display, BLACK,
+    barrier_rect = pygame.draw.line(display, BLACK,
                      (barrier['x'], RESOLUTION[1]),
                      (barrier['x'], RESOLUTION[1] - barrier['height']),
                       barrier['width'])
-    return
+    return barrier_rect
     
 
     
@@ -522,9 +542,10 @@ def tank_fire(display, tank):
     power = tank['power']
     angle = tank['angle']
     start = tank['turret']
-    tank['power'] = 0
+    tank['power'] = 10
     tank['increase'] = False
-    cur_pos = copy.copy(start)
+    cur_pos = (start[0] + 5 * tank['facing'],
+               start[1] + 5 * tank['facing'])
     # x**2 + y**2 = power ** 2
     # so with angle we have sin(angle) = y / power
     # and cos(angle) = x / power
@@ -569,11 +590,13 @@ def tank_fire(display, tank):
                     if event.key == pygame.K_n:
                         firing = False
 
-        pygame.draw.circle(display, RED, cur_pos, 5)
+        pygame.draw.circle(display, BG_COLOR, cur_pos, 5)
         cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
                    cur_pos[1] + cur_speed[1])
         cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
+        shell = pygame.draw.circle(display, RED, cur_pos, 5)
+        
 
         
         #firing = False
