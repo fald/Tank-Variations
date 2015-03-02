@@ -593,9 +593,12 @@ def tank_fire(display, tank):
         pygame.draw.circle(display, BG_COLOR, cur_pos, 5)
         cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
                    cur_pos[1] + cur_speed[1])
+        # TODO: Increment it one at a time just to avoid bullets going through things
+        # for i in range(
         cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
         shell = pygame.draw.circle(display, RED, cur_pos, 5)
+        
         
 
         
