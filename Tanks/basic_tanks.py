@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import pygame, sys, random, time, math
+import pygame, sys, random, time, math, copy
 from pygame.locals import *
 
 #----------------------
@@ -35,6 +35,7 @@ BLOCK_SIZE = 50
 #-----------------------
 SCORE = 0
 TURN  = 0 # 0 => player, 1 => enemy
+DECELERATION = (0, 10) # Hurr, remember y down is +ve
 player = {'x':RESOLUTION[0] * 0,
           'y':RESOLUTION[1] * 0.9 - TANK_DIM[1],
           'move':0,
@@ -50,6 +51,7 @@ player = {'x':RESOLUTION[0] * 0,
           'power_incr':5,
           'increase':False,
           'power_max':255,
+          'facing':1,
           # Include an increase/decrease so holding afer
           # apex weakens shot?
           } 
@@ -67,6 +69,7 @@ enemy = {'x':RESOLUTION[0] * 1 - TANK_DIM[0],
          'power_incr':5,
          'increase':False,
          'power_max':255,
+         'facing':-1,
          }
 tanks = (player, enemy)
 barrier = {'height':RESOLUTION[1] - player['y'] + TANK_DIM[1] + random.randint(0, TANK_DIM[1] * 2),
@@ -466,6 +469,7 @@ def draw_barrier(display):
     
 def draw_tank(display, tank,
               tankW=TANK_DIM[0], tankH=TANK_DIM[1], tread_radius=0.8):
+    # TODO: draw power meter
     # pos is the circles center
     turret_center = (int(tank['x'] + tankW / 2.0),
                      int(tank['y'] + tankH / 3.0))
@@ -512,8 +516,72 @@ def draw_tank(display, tank,
 def tank_fire(display, tank):
     # This is a new 'page' like pause. Don't want tanks moving
     # between shots, and this seems a reasonable way to do it.
-    global TURN
+    global TURN, DECELERATION
+
     TURN = (TURN + 1) % 2
+    power = tank['power']
+    angle = tank['angle']
+    start = tank['turret']
+    tank['power'] = 0
+    tank['increase'] = False
+    cur_pos = copy.copy(start)
+    # x**2 + y**2 = power ** 2
+    # so with angle we have sin(angle) = y / power
+    # and cos(angle) = x / power
+    cur_speed = (int(math.cos(angle) * power),
+                 int(math.sin(angle) * power))
+    cur_accel =  DECELERATION
+    
+
+    firing = True
+
+    # I can't brain today, I have the dumb.
+    # So, a quadratic formula.
+    # The (x, y) position is with respect to time.
+    # Derivative is the speed.
+    # Derivative of speed is the acceleration.
+    # Position formula is of form:
+    #   y = (1 / a)(x - b)**2
+    # Then speed is:
+    #   dy/dx = (2 / a)(x - b)
+    # And accel is:
+    #   d^2y/dx^2 = (2 / a)
+    # We have speed at start_position:
+    # cur_speed[1] = (2 / a)(cur_speed[0] - b)
+    # ...
+    # ...
+    # Or just fuck it. Don't decelerate X so hard and let
+    # it work itself out.
+    # Set x/y deceleration. Then just work backwards.
+
+    while firing:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                sys.exit(0)
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.display.quit()
+                    sys.exit(0)
+                else:
+                    if event.key == pygame.K_p:
+                        pause()
+                    if event.key == pygame.K_n:
+                        firing = False
+
+        pygame.draw.circle(display, RED, cur_pos, 5)
+        cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
+                   cur_pos[1] + cur_speed[1])
+        cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
+                     cur_speed[1] + cur_accel[1])
+
+        
+        #firing = False
+
+
+        pygame.display.update()
+        clock.tick(FPS)
+    
     pass
 
 def text_to_button(surface, 
