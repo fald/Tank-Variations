@@ -282,6 +282,10 @@ def play():
 
         for tank in tanks:
             draw_tank(gameDisplay, tank)
+            tank['rect'] = pygame.Rect(tank['x'],
+                                       tank['y'],
+                                       TANK_DIM[0],
+                                       TANK_DIM[1])
 
 ##        player['x'] += player['move']
 ##        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
@@ -334,10 +338,6 @@ def play():
                     if event.key in (pygame.K_RIGHT, pygame.K_LEFT):
                         tanks[TURN]['move'] = 0
                         stall = False
-                        tanks[TURN]['rect'] = pygame.Rect(tanks[TURN]['x'],
-                                                          tanks[TURN]['y'],
-                                                          TANK_DIM[0],
-                                                          TANK_DIM[1])
                     if event.key in (pygame.K_UP, pygame.K_DOWN):
                         tanks[TURN]['turn'] = 0
 
@@ -598,6 +598,9 @@ def tank_fire(display, tank):
         cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
         shell = pygame.draw.circle(display, RED, cur_pos, 5)
+        print shell.bottom
+        if shell.bottom >= player['rect'].bottom:
+            firing = False
         
         
 
