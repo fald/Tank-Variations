@@ -598,7 +598,6 @@ def tank_fire(display, tank):
         cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
         shell = pygame.draw.circle(display, RED, cur_pos, 5)
-        print shell.bottom
         if shell.bottom >= player['rect'].bottom:
             firing = False
         
