@@ -53,6 +53,7 @@ player = {'x':RESOLUTION[0] * 0,
           'power_max':255,
           'facing':1,
           'rect':None,
+          'score':0
           # Include an increase/decrease so holding afer
           # apex weakens shot?
           } 
@@ -72,6 +73,7 @@ enemy = {'x':RESOLUTION[0] * 1 - TANK_DIM[0],
          'power_max':255,
          'facing':-1,
          'rect':None,
+         'score':0,
          }
 tanks = (player, enemy)
 barrier = {'height':RESOLUTION[1] - player['y'] + TANK_DIM[1] + random.randint(0, TANK_DIM[1] * 2),
@@ -265,6 +267,16 @@ def play():
     play = True
     stall = False
 
+    
+    player['rect'] = pygame.Rect(player['x'],
+                                 player['y'],
+                                 TANK_DIM[0],
+                                 TANK_DIM[1])
+    enemy['rect'] = pygame.Rect(enemy['x'],
+                                enemy['y'],
+                                TANK_DIM[0],
+                                TANK_DIM[1])
+
     while play:
         gameDisplay.fill(BG_COLOR)
 
@@ -282,10 +294,6 @@ def play():
 
         for tank in tanks:
             draw_tank(gameDisplay, tank)
-            tank['rect'] = pygame.Rect(tank['x'],
-                                       tank['y'],
-                                       TANK_DIM[0],
-                                       TANK_DIM[1])
 
 ##        player['x'] += player['move']
 ##        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
@@ -338,6 +346,10 @@ def play():
                     if event.key in (pygame.K_RIGHT, pygame.K_LEFT):
                         tanks[TURN]['move'] = 0
                         stall = False
+                        tanks[TURN]['rect'] = pygame.Rect(tanks[TURN]['x'],
+                                                          tanks[TURN]['y'],
+                                                          TANK_DIM[0],
+                                                          TANK_DIM[1])
                     if event.key in (pygame.K_UP, pygame.K_DOWN):
                         tanks[TURN]['turn'] = 0
 
@@ -585,7 +597,7 @@ def tank_fire(display, tank):
                     pygame.display.quit()
                     sys.exit(0)
                 else:
-                    if event.key == pygame.K_p:
+                    if event.key == pygame.K4_p:
                         pause()
                     if event.key == pygame.K_n:
                         firing = False
@@ -598,12 +610,14 @@ def tank_fire(display, tank):
         cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
         shell = pygame.draw.circle(display, RED, cur_pos, 5)
-        print shell.bottom
-        if shell.bottom >= player['rect'].bottom:
-            firing = False
-        
-        
 
+        if (shell.bottom >= player['rect'].bottom) or \
+           (shell.colliderect(barrier['rect'])):
+            firing = False
+        if (shell.colliderect(tanks[TURN]['rect'])):
+            firing = False
+            tanks[(TURN + 1) % 2]['score'] += 1
+            
         
         #firing = False
 
@@ -713,6 +727,7 @@ def main_loop():
                     pass
 
 
+        game_intro()
         gameDisplay.fill(BG_COLOR)
 
         pygame.display.update()
@@ -726,6 +741,6 @@ def main_loop():
 
 
 if __name__ == "__main__":
-    game_intro()
+    # game_intro()
     main_loop()
 
