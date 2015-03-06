@@ -588,28 +588,41 @@ def tank_fire(display, tank):
     # Set x/y deceleration. Then just work backwards.
 
     while firing:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.display.quit()
-                sys.exit(0)
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.display.quit()
-                    sys.exit(0)
-                else:
-                    if event.key == pygame.K4_p:
-                        pause()
-                    if event.key == pygame.K_n:
-                        firing = False
+        absp = (abs(cur_speed[0]), abs(cur_speed[1]))
+        increment = (cur_speed[0] / float(max(absp)),
+                     cur_speed[1] / float(max(absp)))        
+##        for event in pygame.event.get():
+##            if event.type == pygame.QUIT:
+##                pygame.display.quit()
+##                sys.exit(0)
+##            elif event.type == pygame.KEYUP:
+##                if event.key == pygame.K_ESCAPE:
+##                    pygame.display.quit()
+##                    sys.exit(0)
+##                else:
+##                    if event.key == pygame.K_p:
+##                        pause()
+##                    if event.key == pygame.K_n:
+##                        firing = False
 
-        pygame.draw.circle(display, BG_COLOR, cur_pos, 5)
-        cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
-                   cur_pos[1] + cur_speed[1])
+        print cur_pos
+        pygame.draw.circle(display, BG_COLOR,
+                           (int(round(cur_pos[0])),
+                            int(round(cur_pos[1]))), 5)
+        for i in range(1, max(cur_speed)):
+            cur_pos = (cur_pos[0] + increment[0],
+                       cur_pos[1] + increment[1])
+            print i, cur_speed, increment, cur_pos
+##        cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
+##                   cur_pos[1] + cur_speed[1])
+            
         # TODO: Increment it one at a time just to avoid bullets going through things
-        # for i in range(
         cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
+        print "got here???"
         shell = pygame.draw.circle(display, RED, cur_pos, 5)
+
+        print "got here?"
 
         if (shell.bottom >= player['rect'].bottom) or \
            (shell.colliderect(barrier['rect'])):
