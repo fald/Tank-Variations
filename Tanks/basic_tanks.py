@@ -621,7 +621,7 @@ def tank_fire(display, tank):
                      cur_speed[1] + cur_accel[1])
         print "got here???"
         shell = pygame.draw.circle(display, RED, cur_pos, 5)
-
+        
         print "got here?"
 
         if (shell.bottom >= player['rect'].bottom) or \
