@@ -17,6 +17,7 @@ L_GREEN = (0, 255, 0)
 BLUE = (20, 20, 200)
 YELLOW = (175, 175, 50)
 L_YELLOW = (255, 255, 0)
+ORANGE = (255, 155, 0)
 
 BG_COLOR = GRAY
 
@@ -611,32 +612,61 @@ def tank_fire(display, tank):
         for i in range(1, max(absp)):
             acc_pos = (acc_pos[0] + increment[0],
                        acc_pos[1] + increment[1])
-            cur_pos = (int(round(acc_pos[0])),
-                       int(round(acc_pos[1])))
-            shell = pygame.draw.circle(display, RED, cur_pos, 5)
 
-
+            shell = pygame.Rect(acc_pos[0], acc_pos[1], 5, 5)
+            # Really fucked this up - super messy to fix it
+            # in the middle of the night with 0 sleep.
+            if (shell.bottom >= player['rect'].bottom) or \
+               (shell.colliderect(barrier['rect'])) or \
+               (shell.top <= 0) or \
+               (shell.right >= RESOLUTION[0]) or \
+               (shell.left <= 0):
+                firing = False
+                pygame.draw.circle(gameDisplay, BG_COLOR,
+                                   cur_pos, 5)
+                cur_pos = (int(round(acc_pos[0])),
+                           int(round(acc_pos[1])))
+                for i in range(10, 15):
+##                    pygame.draw.circle(gameDisplay, BG_COLOR,
+##                                       cur_pos, 5)
+                    pygame.draw.circle(gameDisplay, ORANGE,
+                                       cur_pos, i)
+                    pygame.display.update()
+                    clock.tick(FPS)
+                pygame.draw.circle(gameDisplay, BG_COLOR,
+                                   cur_pos, 15)
+                draw_barrier(gameDisplay)
+                break
+            if (shell.colliderect(tanks[TURN]['rect'])):
+                firing = False
+                cur_pos = (int(round(acc_pos[0])),
+                           int(round(acc_pos[1])))
+                tanks[(TURN + 1) % 2]['score'] += 1
+                break
+            
 
 ##        cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
 ##                   cur_pos[1] + cur_speed[1])
-            
-        # TODO: Increment it one at a time just to avoid bullets going through things
 
-##        pygame.draw.circle(display, BG_COLOR, cur_pos, 5)
+        # Clear previous shell, but without redrawing whole screen.            
+        if firing: pygame.draw.circle(display, BG_COLOR, cur_pos, 5)
+
+
+
+        ########
+        # Trail
+        ########
         cur_pos = (int(round(acc_pos[0])),
                    int(round(acc_pos[1])))
+##      shell = pygame.draw.circle(display, RED, cur_pos, 5)
+
+
+
         cur_speed = (max(0, absp[0] + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
-        shell = pygame.draw.circle(display, RED, cur_pos, 5)
+        if firing: shell = pygame.draw.circle(display, RED, cur_pos, 5)
         
 
-        if (shell.bottom >= player['rect'].bottom) or \
-           (shell.colliderect(barrier['rect'])):
-            firing = False
-        if (shell.colliderect(tanks[TURN]['rect'])):
-            firing = False
-            tanks[(TURN + 1) % 2]['score'] += 1
-            
         
         #firing = False
 
