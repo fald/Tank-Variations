@@ -3,6 +3,14 @@
 import pygame, sys, random, time, math, copy
 from pygame.locals import *
 
+
+#######################
+# TODO:
+#######################
+# 1- Display score
+# 2- On explosion, remove tank, have a new one roll in
+#
+
 #----------------------
 # CONFIG
 # ---------------------
@@ -639,9 +647,27 @@ def tank_fire(display, tank):
                 break
             if (shell.colliderect(tanks[TURN]['rect'])):
                 firing = False
+                pygame.draw.circle(gameDisplay, BG_COLOR,
+                                   cur_pos, 5)
                 cur_pos = (int(round(acc_pos[0])),
                            int(round(acc_pos[1])))
                 tanks[(TURN + 1) % 2]['score'] += 1
+                for i in range(10, TANK_DIM[1]):
+                    ellipseRect = pygame.Rect(0, 0, 5 * i, TANK_DIM[1] / 2)
+                    ellipseRect.center = tanks[TURN]['rect'].center
+                    pygame.draw.ellipse(gameDisplay, ORANGE,
+                                        ellipseRect)
+                    pygame.draw.circle(gameDisplay, ORANGE,
+                                       tanks[TURN]['rect'].center,
+                                       i)
+                    pygame.draw.circle(gameDisplay, L_YELLOW,
+                                       tanks[TURN]['rect'].center,
+                                       i / 2)
+
+                    pygame.display.update()
+                    clock.tick(FPS)
+                    
+                
                 break
             
 
