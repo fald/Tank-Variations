@@ -666,6 +666,33 @@ def tank_fire(display, tank):
 
                     pygame.display.update()
                     clock.tick(FPS)
+
+                pygame.draw.ellipse(gameDisplay, BG_COLOR,
+                                    ellipseRect)
+                pygame.draw.circle(gameDisplay, BG_COLOR,
+                                   tanks[TURN]['rect'].center,
+                                   i)
+                                    
+
+
+                if tanks[TURN]['facing'] == 1:
+                    tanks[TURN]['x'] = -TANK_DIM[0]
+                    tanks[TURN]['angle'] = 0
+                else:
+                    tanks[TURN]['x'] = RESOLUTION[0]
+                    tanks[TURN]['angle'] = math.pi
+
+                for i in range(TANK_DIM[0]):
+                    tanks[TURN]['x'] += 1 * tanks[TURN]['facing']
+                    pygame.draw.rect(gameDisplay, BG_COLOR,
+                                     pygame.Rect((tanks[TURN]['x'],
+                                                 tanks[TURN]['y']),
+                                                 TANK_DIM))
+                    draw_tank(gameDisplay, tanks[TURN])
+                    pygame.display.update()
+                    clock.tick(FPS)
+
+                
                     
                 
                 break
