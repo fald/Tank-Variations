@@ -7,9 +7,8 @@ from pygame.locals import *
 #######################
 # TODO:
 #######################
-# 1- Display score
-# 2- On explosion, remove tank, have a new one roll in
-#
+
+
 
 #----------------------
 # CONFIG
@@ -42,7 +41,7 @@ BLOCK_SIZE = 50
 #-----------------------
 # OTHER GLOBALS
 #-----------------------
-SCORE = 0
+
 TURN  = 0 # 0 => player, 1 => enemy
 DECELERATION = (0, 10) # Hurr, remember y down is +ve
 player = {'x':RESOLUTION[0] * 0,
@@ -58,6 +57,8 @@ player = {'x':RESOLUTION[0] * 0,
           'name':'player',
           'power':10,
           'power_incr':5,
+          'min_power':10,
+          'max_power':100,
           'increase':False,
           'power_max':255,
           'facing':1,
@@ -78,6 +79,8 @@ enemy = {'x':RESOLUTION[0] * 1 - TANK_DIM[0],
          'name':'enemy',
          'power':10,
          'power_incr':5,
+         'min_power':10,
+         'max_power':100,
          'increase':False,
          'power_max':255,
          'facing':-1,
@@ -288,6 +291,8 @@ def play():
 
     while play:
         gameDisplay.fill(BG_COLOR)
+        gameDisplay.fill(BLACK, pygame.Rect(0, tanks[0]['y'] + TANK_DIM[1],
+                                            RESOLUTION[0], RESOLUTION[1] - tanks[0]['y']))
 
         tanks[TURN]['x'] += tanks[TURN]['move']
         tanks[TURN]['x'] =  max(min(RESOLUTION[0] - TANK_DIM[0],
@@ -297,12 +302,30 @@ def play():
                                        tanks[TURN]['angle']),
                                    tanks[TURN]['max'])
         tanks[TURN]['power'] += tanks[TURN]['power_incr'] * tanks[TURN]['increase']
+        tanks[TURN]['power'] = min(tanks[TURN]['power'], tanks[TURN]['max_power'])
+        tanks[TURN]['power'] = max(tanks[TURN]['power'], tanks[TURN]['min_power'])
+        if ((tanks[TURN]['power'] == tanks[TURN]['max_power']) or \
+           (tanks[TURN]['power'] == tanks[TURN]['min_power'])) and \
+           True:
+            tanks[TURN]['power_incr'] = -1 * tanks[TURN]['power_incr']
 
         tanks[(TURN + 1) % 2]['move'] = 0
         tanks[(TURN + 1) % 2]['turn'] = 0
 
         for tank in tanks:
             draw_tank(gameDisplay, tank)
+            # lol the cleanup version of this is going to be one hell of a project.
+##            score_x = ((RESOLUTION[0] - 32) * (tank['facing'] == -1)) +\
+##                       ((RESOLUTION[-]+ \
+##                       (5 * tank['facing'])
+            score_x = ((RESOLUTION[0] - 32) * (tank['facing'] == -1)) +\
+                       (32 * (tank['facing'] == 1)) +\
+                       (5 * tank['facing'])
+            score_m = ""
+            if tank['score'] < 10: score_m += "0"
+            score_m += str(tank['score'])
+            msg_to_screen(score_m, largeFont, BLACK,
+                          (score_x, 37))
 
 ##        player['x'] += player['move']
 ##        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
@@ -510,7 +533,6 @@ def draw_barrier(display):
     
 def draw_tank(display, tank,
               tankW=TANK_DIM[0], tankH=TANK_DIM[1], tread_radius=0.8):
-    # TODO: draw power meter
     # pos is the circles center
     turret_center = (int(tank['x'] + tankW / 2.0),
                      int(tank['y'] + tankH / 3.0))
@@ -552,6 +574,22 @@ def draw_tank(display, tank,
     for i in range(bot_wheels):
         pygame.draw.circle(gameDisplay, BLACK, cur_position, wheel_radius)
         cur_position = [cur_position[0] + 2 * wheel_radius + bot_spacing, cur_position[1]]
+
+    if tank['increase']:
+        power_rect = pygame.Rect((tank['x'], tank['y'] - 32), (TANK_DIM[0], 10))
+        pygame.draw.rect(gameDisplay, BLACK, power_rect, 2)
+        for i in range(int((tank['power'] - 10) * (2.0 / 3))):
+            color = (255, int(255.0 / 60) * i, 0)
+            start = (power_rect.x + 1 + i,
+                     power_rect.y + 1)
+            end = (start[0],
+                   start[1] + 8)
+                   
+            pygame.draw.line(gameDisplay, color, start, end)
+            pass
+    else:
+        power_rect = pygame.Rect((tank['x'], tank['y'] - 32), (TANK_DIM[0], 12))
+        pygame.draw.rect(gameDisplay, BG_COLOR, power_rect)
     
     
 def tank_fire(display, tank):
@@ -565,6 +603,7 @@ def tank_fire(display, tank):
     start = tank['turret']
     tank['power'] = 10
     tank['increase'] = False
+    draw_tank(gameDisplay, tank)
     cur_pos = (start[0] + 5 * tank['facing'],
                start[1] + 5 * tank['facing'])
     # x**2 + y**2 = power ** 2
@@ -652,17 +691,18 @@ def tank_fire(display, tank):
                 cur_pos = (int(round(acc_pos[0])),
                            int(round(acc_pos[1])))
                 tanks[(TURN + 1) % 2]['score'] += 1
-                for i in range(10, TANK_DIM[1]):
-                    ellipseRect = pygame.Rect(0, 0, 5 * i, TANK_DIM[1] / 2)
+                for i in range(10, TANK_DIM[1] / 2):
+                    ellipseRect = pygame.Rect(0, 0, 5 * 2 * i, TANK_DIM[1] / 2)
                     ellipseRect.center = tanks[TURN]['rect'].center
                     pygame.draw.ellipse(gameDisplay, ORANGE,
                                         ellipseRect)
                     pygame.draw.circle(gameDisplay, ORANGE,
                                        tanks[TURN]['rect'].center,
-                                       i)
+                                       i * 2)
                     pygame.draw.circle(gameDisplay, L_YELLOW,
                                        tanks[TURN]['rect'].center,
-                                       i / 2)
+                                       i)
+
 
                     pygame.display.update()
                     clock.tick(FPS)
@@ -671,8 +711,9 @@ def tank_fire(display, tank):
                                     ellipseRect)
                 pygame.draw.circle(gameDisplay, BG_COLOR,
                                    tanks[TURN]['rect'].center,
-                                   i)
-                                    
+                                   i * 2)
+                gameDisplay.fill(BLACK, pygame.Rect(0, tanks[0]['y'] + TANK_DIM[1],
+                        RESOLUTION[0], RESOLUTION[1] - tanks[0]['y']))
 
 
                 if tanks[TURN]['facing'] == 1:
@@ -718,6 +759,9 @@ def tank_fire(display, tank):
         cur_speed = (max(0, absp[0] + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
         if firing: shell = pygame.draw.circle(display, RED, cur_pos, 5)
+
+        gameDisplay.fill(BLACK, pygame.Rect(0, tanks[0]['y'] + TANK_DIM[1],
+                                            RESOLUTION[0], RESOLUTION[1] - tanks[0]['y']))
         
 
         
