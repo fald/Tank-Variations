@@ -7,6 +7,7 @@ from pygame.locals import *
 #######################
 # TODO:
 #######################
+# 1- Basic AI
 
 
 
