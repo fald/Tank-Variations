@@ -3,15 +3,6 @@
 import pygame, sys, random, time, math, copy
 from pygame.locals import *
 
-
-#######################
-# TODO:
-#######################
-# 1- for v2: Basic AI
-# 2- For v2: Health bars
-
-
-
 #----------------------
 # CONFIG
 # ---------------------
@@ -26,7 +17,6 @@ L_GREEN = (0, 255, 0)
 BLUE = (20, 20, 200)
 YELLOW = (175, 175, 50)
 L_YELLOW = (255, 255, 0)
-ORANGE = (255, 155, 0)
 
 BG_COLOR = GRAY
 
@@ -43,7 +33,7 @@ BLOCK_SIZE = 50
 #-----------------------
 # OTHER GLOBALS
 #-----------------------
-
+SCORE = 0
 TURN  = 0 # 0 => player, 1 => enemy
 DECELERATION = (0, 10) # Hurr, remember y down is +ve
 player = {'x':RESOLUTION[0] * 0,
@@ -59,8 +49,6 @@ player = {'x':RESOLUTION[0] * 0,
           'name':'player',
           'power':10,
           'power_incr':5,
-          'min_power':10,
-          'max_power':100,
           'increase':False,
           'power_max':255,
           'facing':1,
@@ -81,8 +69,6 @@ enemy = {'x':RESOLUTION[0] * 1 - TANK_DIM[0],
          'name':'enemy',
          'power':10,
          'power_incr':5,
-         'min_power':10,
-         'max_power':100,
          'increase':False,
          'power_max':255,
          'facing':-1,
@@ -112,13 +98,6 @@ clock = pygame.time.Clock()
 defaultFont = pygame.font.SysFont("umeuigothic", 32, bold=True)
 tinyFont = pygame.font.SysFont("umeuigothic", 18, bold=True)
 largeFont = pygame.font.SysFont("umeuigothic", 64)
-
-move_sound = pygame.mixer.Sound("tankmove.wav")
-shoot_sound = pygame.mixer.Sound("tankshoot.wav")
-explode_base = pygame.mixer.Sound("explode.wav")
-explode_tank = pygame.mixer.Sound("explode2.wav")
-
-
 
 # Sprites...
 # sprite = pygame.image.load(filename)
@@ -300,8 +279,6 @@ def play():
 
     while play:
         gameDisplay.fill(BG_COLOR)
-        gameDisplay.fill(BLACK, pygame.Rect(0, tanks[0]['y'] + TANK_DIM[1],
-                                            RESOLUTION[0], RESOLUTION[1] - tanks[0]['y']))
 
         tanks[TURN]['x'] += tanks[TURN]['move']
         tanks[TURN]['x'] =  max(min(RESOLUTION[0] - TANK_DIM[0],
@@ -311,30 +288,12 @@ def play():
                                        tanks[TURN]['angle']),
                                    tanks[TURN]['max'])
         tanks[TURN]['power'] += tanks[TURN]['power_incr'] * tanks[TURN]['increase']
-        tanks[TURN]['power'] = min(tanks[TURN]['power'], tanks[TURN]['max_power'])
-        tanks[TURN]['power'] = max(tanks[TURN]['power'], tanks[TURN]['min_power'])
-        if ((tanks[TURN]['power'] == tanks[TURN]['max_power']) or \
-           (tanks[TURN]['power'] == tanks[TURN]['min_power'])) and \
-           True:
-            tanks[TURN]['power_incr'] = -1 * tanks[TURN]['power_incr']
 
         tanks[(TURN + 1) % 2]['move'] = 0
         tanks[(TURN + 1) % 2]['turn'] = 0
 
         for tank in tanks:
             draw_tank(gameDisplay, tank)
-            # lol the cleanup version of this is going to be one hell of a project.
-##            score_x = ((RESOLUTION[0] - 32) * (tank['facing'] == -1)) +\
-##                       ((RESOLUTION[-]+ \
-##                       (5 * tank['facing'])
-            score_x = ((RESOLUTION[0] - 32) * (tank['facing'] == -1)) +\
-                       (32 * (tank['facing'] == 1)) +\
-                       (5 * tank['facing'])
-            score_m = ""
-            if tank['score'] < 10: score_m += "0"
-            score_m += str(tank['score'])
-            msg_to_screen(score_m, largeFont, BLACK,
-                          (score_x, 37))
 
 ##        player['x'] += player['move']
 ##        player['x'] = max(min(RESOLUTION[0] - TANK_DIM[0],
@@ -387,7 +346,6 @@ def play():
                     if event.key in (pygame.K_RIGHT, pygame.K_LEFT):
                         tanks[TURN]['move'] = 0
                         stall = False
-                        pygame.mixer.Sound.stop(move_sound)
                         tanks[TURN]['rect'] = pygame.Rect(tanks[TURN]['x'],
                                                           tanks[TURN]['y'],
                                                           TANK_DIM[0],
@@ -407,13 +365,11 @@ def play():
 ##                        player['move'] = 5
 ##                        enemy['move'] = 5
                         tanks[TURN]['move'] = 5
-                        pygame.mixer.Sound.play(move_sound)
                 if event.key == pygame.K_LEFT:
                     if not stall:
 ##                        player['move'] = -5
 ##                        enemy['move'] = -5
                         tanks[TURN]['move'] = -5
-                        pygame.mixer.Sound.play(move_sound)
                 if event.key == pygame.K_UP:
                     tanks[TURN]['turn'] = -math.pi / 90 * tanks[TURN]['facing']
                 if event.key == pygame.K_DOWN:
@@ -545,6 +501,7 @@ def draw_barrier(display):
     
 def draw_tank(display, tank,
               tankW=TANK_DIM[0], tankH=TANK_DIM[1], tread_radius=0.8):
+    # TODO: draw power meter
     # pos is the circles center
     turret_center = (int(tank['x'] + tankW / 2.0),
                      int(tank['y'] + tankH / 3.0))
@@ -586,22 +543,6 @@ def draw_tank(display, tank,
     for i in range(bot_wheels):
         pygame.draw.circle(gameDisplay, BLACK, cur_position, wheel_radius)
         cur_position = [cur_position[0] + 2 * wheel_radius + bot_spacing, cur_position[1]]
-
-    if tank['increase']:
-        power_rect = pygame.Rect((tank['x'], tank['y'] - 32), (TANK_DIM[0], 10))
-        pygame.draw.rect(gameDisplay, BLACK, power_rect, 2)
-        for i in range(int((tank['power'] - 10) * (2.0 / 3))):
-            color = (255, int(255.0 / 60) * i, 0)
-            start = (power_rect.x + 1 + i,
-                     power_rect.y + 1)
-            end = (start[0],
-                   start[1] + 8)
-                   
-            pygame.draw.line(gameDisplay, color, start, end)
-            pass
-    else:
-        power_rect = pygame.Rect((tank['x'], tank['y'] - 32), (TANK_DIM[0] + 1, 12))
-        pygame.draw.rect(gameDisplay, BG_COLOR, power_rect)
     
     
 def tank_fire(display, tank):
@@ -615,7 +556,6 @@ def tank_fire(display, tank):
     start = tank['turret']
     tank['power'] = 10
     tank['increase'] = False
-    draw_tank(gameDisplay, tank)
     cur_pos = (start[0] + 5 * tank['facing'],
                start[1] + 5 * tank['facing'])
     # x**2 + y**2 = power ** 2
@@ -623,13 +563,10 @@ def tank_fire(display, tank):
     # and cos(angle) = x / power
     cur_speed = (int(math.cos(angle) * power),
                  int(math.sin(angle) * power))
-    acc_pos = (float(cur_pos[0]), float(cur_pos[1]))
     cur_accel =  DECELERATION
     
 
     firing = True
-
-    pygame.mixer.Sound.play(shoot_sound)
 
     # I can't brain today, I have the dumb.
     # So, a quadratic formula.
@@ -654,132 +591,46 @@ def tank_fire(display, tank):
         absp = (abs(cur_speed[0]), abs(cur_speed[1]))
         increment = (cur_speed[0] / float(max(absp)),
                      cur_speed[1] / float(max(absp)))        
-        for event in pygame.event.get():
-            if (event.type == pygame.QUIT) or \
-               (event.type == pygame.KEYUP and event.key ==  K_ESCAPE):
-                pygame.display.quit()
-                sys.exit(0)
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_p:
-                    pause()
-                if event.key == pygame.K_n:
-                    firing = False
+##        for event in pygame.event.get():
+##            if event.type == pygame.QUIT:
+##                pygame.display.quit()
+##                sys.exit(0)
+##            elif event.type == pygame.KEYUP:
+##                if event.key == pygame.K_ESCAPE:
+##                    pygame.display.quit()
+##                    sys.exit(0)
+##                else:
+##                    if event.key == pygame.K_p:
+##                        pause()
+##                    if event.key == pygame.K_n:
+##                        firing = False
 
-
-##        pygame.draw.circle(display, BG_COLOR,
-##                           (int(round(cur_pos[0])),
-##                            int(round(cur_pos[1]))), 5)
-        
-        for i in range(1, max(absp)):
-            acc_pos = (acc_pos[0] + increment[0],
-                       acc_pos[1] + increment[1])
-
-            shell = pygame.Rect(acc_pos[0], acc_pos[1], 5, 5)
-            # Really fucked this up - super messy to fix it
-            # in the middle of the night with 0 sleep.
-            if (shell.bottom >= player['rect'].bottom) or \
-               (shell.colliderect(barrier['rect'])) or \
-               (shell.top <= 0) or \
-               (shell.right >= RESOLUTION[0]) or \
-               (shell.left <= 0):
-                firing = False
-                pygame.draw.circle(gameDisplay, BG_COLOR,
-                                   cur_pos, 5)
-                cur_pos = (int(round(acc_pos[0])),
-                           int(round(acc_pos[1])))
-                pygame.mixer.Sound.play(explode_base)
-                for i in range(10, 15):
-##                    pygame.draw.circle(gameDisplay, BG_COLOR,
-##                                       cur_pos, 5)
-                    pygame.draw.circle(gameDisplay, ORANGE,
-                                       cur_pos, i)
-                    pygame.display.update()
-                    clock.tick(FPS)
-                pygame.draw.circle(gameDisplay, BG_COLOR,
-                                   cur_pos, 15)
-                draw_barrier(gameDisplay)
-                break
-            if (shell.colliderect(tanks[TURN]['rect'])):
-                firing = False
-                pygame.draw.circle(gameDisplay, BG_COLOR,
-                                   cur_pos, 5)
-                pygame.mixer.Sound.play(explode_tank)
-                cur_pos = (int(round(acc_pos[0])),
-                           int(round(acc_pos[1])))
-                tanks[(TURN + 1) % 2]['score'] += 1
-                for i in range(10, TANK_DIM[1] / 2):
-                    ellipseRect = pygame.Rect(0, 0, 5 * 2 * i, TANK_DIM[1] / 2)
-                    ellipseRect.center = tanks[TURN]['rect'].center
-                    pygame.draw.ellipse(gameDisplay, ORANGE,
-                                        ellipseRect)
-                    pygame.draw.circle(gameDisplay, ORANGE,
-                                       tanks[TURN]['rect'].center,
-                                       i * 2)
-                    pygame.draw.circle(gameDisplay, L_YELLOW,
-                                       tanks[TURN]['rect'].center,
-                                       i)
-
-
-                    pygame.display.update()
-                    clock.tick(FPS)
-
-                pygame.draw.ellipse(gameDisplay, BG_COLOR,
-                                    ellipseRect)
-                pygame.draw.circle(gameDisplay, BG_COLOR,
-                                   tanks[TURN]['rect'].center,
-                                   i * 2)
-                gameDisplay.fill(BLACK, pygame.Rect(0, tanks[0]['y'] + TANK_DIM[1],
-                        RESOLUTION[0], RESOLUTION[1] - tanks[0]['y']))
-
-
-                if tanks[TURN]['facing'] == 1:
-                    tanks[TURN]['x'] = -TANK_DIM[0]
-                    tanks[TURN]['angle'] = 0
-                else:
-                    tanks[TURN]['x'] = RESOLUTION[0]
-                    tanks[TURN]['angle'] = math.pi
-
-                for i in range(TANK_DIM[0]):
-                    tanks[TURN]['x'] += 1 * tanks[TURN]['facing']
-                    pygame.draw.rect(gameDisplay, BG_COLOR,
-                                     pygame.Rect((tanks[TURN]['x'],
-                                                 tanks[TURN]['y']),
-                                                 TANK_DIM))
-                    draw_tank(gameDisplay, tanks[TURN])
-                    pygame.display.update()
-                    clock.tick(FPS)
-
-                
-                    
-                
-                break
-            
-
+        print cur_pos
+        pygame.draw.circle(display, BG_COLOR,
+                           (int(round(cur_pos[0])),
+                            int(round(cur_pos[1]))), 5)
+        for i in range(1, max(cur_speed)):
+            cur_pos = (cur_pos[0] + increment[0],
+                       cur_pos[1] + increment[1])
+            print i, cur_speed, increment, cur_pos
 ##        cur_pos = (cur_pos[0] + cur_speed[0],# * tank['facing'],
 ##                   cur_pos[1] + cur_speed[1])
-
-        # Clear previous shell, but without redrawing whole screen.            
-        if firing: pygame.draw.circle(display, BG_COLOR, cur_pos, 5)
-
-
-
-        ########
-        # Trail
-        ########
-        cur_pos = (int(round(acc_pos[0])),
-                   int(round(acc_pos[1])))
-##      shell = pygame.draw.circle(display, RED, cur_pos, 5)
-
-
-
-        cur_speed = (max(0, absp[0] + cur_accel[0]) * tank['facing'],
+            
+        # TODO: Increment it one at a time just to avoid bullets going through things
+        cur_speed = (max(0, abs(cur_speed[0]) + cur_accel[0]) * tank['facing'],
                      cur_speed[1] + cur_accel[1])
-        if firing: shell = pygame.draw.circle(display, RED, cur_pos, 5)
+        print "got here???"
+        shell = pygame.draw.circle(display, RED, cur_pos, 5)
 
-        gameDisplay.fill(BLACK, pygame.Rect(0, tanks[0]['y'] + TANK_DIM[1],
-                                            RESOLUTION[0], RESOLUTION[1] - tanks[0]['y']))
-        
+        print "got here?"
 
+        if (shell.bottom >= player['rect'].bottom) or \
+           (shell.colliderect(barrier['rect'])):
+            firing = False
+        if (shell.colliderect(tanks[TURN]['rect'])):
+            firing = False
+            tanks[(TURN + 1) % 2]['score'] += 1
+            
         
         #firing = False
 
