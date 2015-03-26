@@ -1,0 +1,13 @@
+# Basic colors for ease
+WHITE   = (255, 255, 255)
+BLACK   = (  0,   0,   0)
+GRAY    = (200, 200, 200)
+RED     = (175,  20,  20)
+LRED    = (255,   0,   0)
+GREEN   = ( 20, 175,  20)
+LGREEN  = (  0, 255,   0)
+BLUE    = ( 20,  20, 175)
+LBLUE   = (  0,   0, 255)
+YELLOW  = (175, 175,  50)
+LYELLOW = (255, 255,   0)
+ORANGE  = (255, 155,   0)

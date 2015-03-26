@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+    
 import pygame, sys, random, time, math, copy
 from pygame.locals import *
 
@@ -9,6 +9,8 @@ from pygame.locals import *
 #######################
 # 1- for v2: Basic AI
 # 2- For v2: Health bars
+# 3- For v2: Object oriented
+# 4- For v2 and all other stuff: Modularize everything.
 
 
 
@@ -117,6 +119,8 @@ move_sound = pygame.mixer.Sound("tankmove.wav")
 shoot_sound = pygame.mixer.Sound("tankshoot.wav")
 explode_base = pygame.mixer.Sound("explode.wav")
 explode_tank = pygame.mixer.Sound("explode2.wav")
+background_music = pygame.mixer.music.load("background.wav")
+pygame.mixer.music.play(-1)
 
 
 
