@@ -2,6 +2,10 @@
 # No error checking for setters, laziness
 # beats assuming I'll fuck up
 
+RESOLUTION  = (800, 600)
+CAPTION     = ""
+FPS         = 30
+
 def set_resolution(new_x, new_y):
     global RESOLUTION
     RESOLUTION = (new_x, new_y)
